@@ -119,7 +119,16 @@ async def delete_user(
 
 @router.post("/logout")
 async def logout_user(
+        db: DBDep,
         response: Response,
+        hashed_refresh_token: RefreshTokenDep,
 ):
+    await db.refresh_token.edit(
+        RefreshTokenUpdate(revoked_at=datetime.now(timezone.utc)),
+        is_patch=True,
+        token_hash=hashed_refresh_token,
+    )
+    await db.commit()
     response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
     return {"status": "OK"}
