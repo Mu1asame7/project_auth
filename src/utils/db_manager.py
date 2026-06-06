@@ -1,3 +1,4 @@
+from src.repo.refresh_token import RefreshTokenRepository
 from src.repo.users import UsersRepository
 
 
@@ -9,6 +10,7 @@ class DBManager:
         self.session = self.session_factory()
 
         self.users = UsersRepository(self.session)
+        self.refresh_token = RefreshTokenRepository(self.session)
 
         return self
 

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Response, HTTPException
 
 from src.api.dependencies import DBDep, UserIdDep
+from src.schemas.refresh_token import RefreshTokenAdd
 from src.schemas.users import UserRequestAdd, UserAdd, UserLogin, UserUpdate
 from src.service.auth import AuthService
 
@@ -37,9 +38,19 @@ async def login_user(
         raise HTTPException(status_code=401, detail="User not found")
     if not AuthService().verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password")
-    access_token = AuthService().create_access_token({"user_id": user.id})
+    access_token = AuthService().create_token({"user_id": user.id})
+    refresh_token = AuthService().create_token({"user_id": user.id}, is_refresh=True)
+    print(refresh_token)
+    new_refresh_token = RefreshTokenAdd(
+        token_hash=AuthService().hash_password(refresh_token),
+        user_id=user.id,
+        expires_at=AuthService().get_token_expire(is_refresh=True),
+    )
+    await db.refresh_token.add(new_refresh_token)
+    await db.commit()
     response.set_cookie("access_token", access_token)
-    return {"access_token": access_token, "token_type": "bearer"}
+    response.set_cookie("refresh_token", refresh_token)
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
 @router.patch("/me")
@@ -50,6 +61,7 @@ async def update_user(
 ):
     await db.users.edit(
         user_data,
+        is_patch=True,
         id=user_id
     )
     await db.commit()
