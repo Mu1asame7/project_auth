@@ -15,7 +15,7 @@ class BaseRepo:
         model = result.scalars().one()
         return self.mapper.map_to_domain_entity(model)
 
-    async def edit(self, data: BaseModel, is_patch: bool = False, **filter_by) -> None:
+    async def edit(self, data: BaseModel, is_patch: bool = True, **filter_by) -> None:
         update_data_stmt = update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=is_patch))
         await self.session.execute(update_data_stmt)
 

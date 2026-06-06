@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, HTTPException
 
-from src.api.dependencies import DBDep
-from src.schemas.users import UserRequestAdd, UserAdd, UserLogin
+from src.api.dependencies import DBDep, UserIdDep
+from src.schemas.users import UserRequestAdd, UserAdd, UserLogin, UserUpdate
 from src.service.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
@@ -32,7 +32,7 @@ async def login_user(
         data: UserLogin,
         response: Response,
 ):
-    user = await db.users.get_user_with_hashed_password(email=data.email)
+    user = await db.users.get_user_with_hashed_password_active(email=data.email)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     if not AuthService().verify_password(data.password, user.hashed_password):
@@ -40,6 +40,34 @@ async def login_user(
     access_token = AuthService().create_access_token({"user_id": user.id})
     response.set_cookie("access_token", access_token)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.patch("/me")
+async def update_user(
+        db: DBDep,
+        user_data: UserUpdate,
+        user_id: UserIdDep
+):
+    await db.users.edit(
+        user_data,
+        id=user_id
+    )
+    await db.commit()
+
+    return {"status": "OK"}
+
+
+@router.delete("/delete")
+async def delete_user(
+        db: DBDep,
+        user_id: UserIdDep,
+        response: Response,
+):
+    print(user_id)
+    await db.users.delete(user_id)
+    await db.commit()
+    response.delete_cookie("access_token")
+    return {"status": "OK"}
 
 
 @router.post("/logout")
