@@ -1,7 +1,9 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Response, HTTPException
 
-from src.api.dependencies import DBDep, UserIdDep
-from src.schemas.refresh_token import RefreshTokenAdd
+from src.api.dependencies import DBDep, UserIdDep, RefreshTokenDep
+from src.schemas.refresh_token import RefreshTokenAdd, RefreshTokenUpdate
 from src.schemas.users import UserRequestAdd, UserAdd, UserLogin, UserUpdate
 from src.service.auth import AuthService
 
@@ -40,16 +42,49 @@ async def login_user(
         raise HTTPException(status_code=401, detail="Incorrect password")
     access_token = AuthService().create_token({"user_id": user.id})
     refresh_token = AuthService().create_token({"user_id": user.id}, is_refresh=True)
-    print(refresh_token)
     new_refresh_token = RefreshTokenAdd(
-        token_hash=AuthService().hash_password(refresh_token),
+        token_hash=AuthService().hash_token(refresh_token),
         user_id=user.id,
         expires_at=AuthService().get_token_expire(is_refresh=True),
     )
     await db.refresh_token.add(new_refresh_token)
     await db.commit()
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token)
+    response.set_cookie("access_token", access_token, httponly=True)
+    response.set_cookie("refresh_token", refresh_token, httponly=True)
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
+
+@router.post("/refresh")
+async def refresh_access_token(
+        db: DBDep,
+        response: Response,
+        hashed_refresh_token: RefreshTokenDep,
+):
+    token_entry = await db.refresh_token.get_one_or_none(token_hash=hashed_refresh_token)
+
+    AuthService.validate_refresh_token_entry(token_entry)
+
+    await db.refresh_token.edit(
+        RefreshTokenUpdate(revoked_at=datetime.now(timezone.utc)),
+        is_patch=True,
+        token_hash=hashed_refresh_token,
+    )
+
+    user_id = token_entry.user_id
+
+    access_token = AuthService().create_token({"user_id": user_id})
+    refresh_token = AuthService().create_token({"user_id": user_id}, is_refresh=True)
+
+    new_hashed_refresh_token = AuthService().hash_token(refresh_token)
+    await db.refresh_token.add(RefreshTokenAdd(
+        token_hash=new_hashed_refresh_token,
+        user_id=user_id,
+        expires_at=AuthService().get_token_expire(is_refresh=True),
+    ))
+    await db.commit()
+
+    response.set_cookie("access_token", access_token, httponly=True)
+    response.set_cookie("refresh_token", refresh_token, httponly=True)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 

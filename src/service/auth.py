@@ -1,4 +1,6 @@
 from datetime import datetime, timezone, timedelta
+from typing import Optional
+
 from fastapi import HTTPException, status
 
 import jwt
@@ -6,6 +8,7 @@ from pwdlib import PasswordHash
 import hashlib
 
 from src.config import settings
+from src.schemas.refresh_token import RefreshTokenDB
 
 
 class AuthService:
@@ -41,3 +44,14 @@ class AuthService:
             return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         except jwt.exceptions.DecodeError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Невалидный токен")
+
+    @staticmethod
+    def validate_refresh_token_entry(token_entry: Optional[RefreshTokenDB]) -> None:
+        if token_entry is None:
+            raise HTTPException(status_code=401, detail="Refresh token not found")
+
+        if token_entry.revoked_at is not None:
+            raise HTTPException(status_code=401, detail="Refresh token has been revoked")
+
+        if token_entry.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=401, detail="Refresh token expired")
