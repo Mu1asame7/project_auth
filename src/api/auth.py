@@ -42,4 +42,9 @@ async def login_user(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-
+@router.post("/logout")
+async def logout_user(
+        response: Response,
+):
+    response.delete_cookie("access_token")
+    return {"status": "OK"}
