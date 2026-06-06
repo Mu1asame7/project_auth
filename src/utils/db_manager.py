@@ -1,4 +1,4 @@
-
+from src.repo.users import UsersRepository
 
 
 class DBManager:
@@ -7,6 +7,8 @@ class DBManager:
 
     async def __aenter__(self):
         self.session = self.session_factory()
+
+        self.users = UsersRepository(self.session)
 
         return self
 

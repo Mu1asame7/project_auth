@@ -15,4 +15,4 @@ async def get_db():
         yield db
 
 
-DBDep = Annotated[get_db, Depends(get_db_manager)]
+DBDep = Annotated[DBManager, Depends(get_db)]
