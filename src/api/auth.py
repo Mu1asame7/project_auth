@@ -16,6 +16,8 @@ async def register_user(
         db: DBDep,
         data: UserRequestAdd,
 ):
+    if data.password != data.password_confirm:
+        raise HTTPException(status_code=401, detail="Некорректный пароль")
     hashed_password = AuthService().hash_password(data.password)
     new_user_data = UserAdd(
         email=data.email,

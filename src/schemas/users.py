@@ -7,6 +7,7 @@ class UserRequestAdd(BaseModel):
     last_name: str
     middle_name: str
     password: str
+    password_confirm: str
 
 
 class UserAdd(BaseModel):

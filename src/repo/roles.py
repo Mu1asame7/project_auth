@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from src.models.roles import RolesORM, UserRoles
-from src.repo.mappers.mappers import RolesDataMapper, RoleMapper
+from src.repo.mappers.mappers import RolesDataMapper, RoleMapper, UserRolesMapper
 from src.repo.base import BaseRepo
 from src.schemas.roles import RoleInDB
 
@@ -13,7 +13,7 @@ class RolesRepository(BaseRepo):
 
 class UserRolesRepository(BaseRepo):
     model = UserRoles
-    mapper = RolesDataMapper
+    mapper = UserRolesMapper
     role_mapper = RoleMapper
 
     async def get_roles_by_user_id(self, user_id: int) -> list[RoleInDB]:
