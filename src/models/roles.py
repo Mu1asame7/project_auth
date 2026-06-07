@@ -1,11 +1,11 @@
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 
 
 class RolesORM(Base):
-    __tablename__ = 'roles'
+    __tablename__ = "roles"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
@@ -17,8 +17,8 @@ class RolesORM(Base):
 
 
 class UserRoles(Base):
-    __tablename__ = 'user_roles'
+    __tablename__ = "user_roles"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"))

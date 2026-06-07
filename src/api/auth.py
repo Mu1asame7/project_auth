@@ -1,11 +1,11 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, Response, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
-from src.api.dependencies import DBDep, UserIdDep, RefreshTokenDep
+from src.api.dependencies import DBDep, RefreshTokenDep, UserIdDep
 from src.schemas.refresh_token import RefreshTokenAdd, RefreshTokenUpdate
 from src.schemas.roles import UserRoleAdd
-from src.schemas.users import UserRequestAdd, UserAdd, UserLogin, UserUpdate, User
+from src.schemas.users import UserAdd, UserLogin, UserRequestAdd, UserUpdate
 from src.service.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
@@ -13,8 +13,8 @@ router = APIRouter(prefix="/auth", tags=["Авторизация и аутент
 
 @router.post("/register")
 async def register_user(
-        db: DBDep,
-        data: UserRequestAdd,
+    db: DBDep,
+    data: UserRequestAdd,
 ):
     if data.password != data.password_confirm:
         raise HTTPException(status_code=401, detail="Некорректный пароль")
@@ -24,7 +24,7 @@ async def register_user(
         first_name=data.first_name,
         last_name=data.last_name,
         middle_name=data.middle_name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
     )
     user = await db.users.add(new_user_data)
 
@@ -38,9 +38,9 @@ async def register_user(
 
 @router.post("/login")
 async def login_user(
-        db: DBDep,
-        data: UserLogin,
-        response: Response,
+    db: DBDep,
+    data: UserLogin,
+    response: Response,
 ):
     user = await db.users.get_user_with_hashed_password_active(email=data.email)
     if not user:
@@ -63,16 +63,16 @@ async def login_user(
 
 @router.post("/refresh")
 async def refresh_access_token(
-        db: DBDep,
-        response: Response,
-        hashed_refresh_token: RefreshTokenDep,
+    db: DBDep,
+    response: Response,
+    hashed_refresh_token: RefreshTokenDep,
 ):
     token_entry = await db.refresh_token.get_one_or_none(token_hash=hashed_refresh_token)
 
     AuthService.validate_refresh_token_entry(token_entry)
 
     await db.refresh_token.edit(
-        RefreshTokenUpdate(revoked_at=datetime.now(timezone.utc)),
+        RefreshTokenUpdate(revoked_at=datetime.now(UTC)),
         is_patch=True,
         token_hash=hashed_refresh_token,
     )
@@ -83,11 +83,13 @@ async def refresh_access_token(
     refresh_token = AuthService().create_token({"user_id": user_id}, is_refresh=True)
 
     new_hashed_refresh_token = AuthService().hash_token(refresh_token)
-    await db.refresh_token.add(RefreshTokenAdd(
-        token_hash=new_hashed_refresh_token,
-        user_id=user_id,
-        expires_at=AuthService().get_token_expire(is_refresh=True),
-    ))
+    await db.refresh_token.add(
+        RefreshTokenAdd(
+            token_hash=new_hashed_refresh_token,
+            user_id=user_id,
+            expires_at=AuthService().get_token_expire(is_refresh=True),
+        )
+    )
     await db.commit()
 
     response.set_cookie("access_token", access_token, httponly=True)
@@ -96,16 +98,8 @@ async def refresh_access_token(
 
 
 @router.patch("/me")
-async def update_user(
-        db: DBDep,
-        user_data: UserUpdate,
-        user_id: UserIdDep
-):
-    await db.users.edit(
-        user_data,
-        is_patch=True,
-        id=user_id
-    )
+async def update_user(db: DBDep, user_data: UserUpdate, user_id: UserIdDep):
+    await db.users.edit(user_data, is_patch=True, id=user_id)
     await db.commit()
 
     return {"status": "OK"}
@@ -113,9 +107,9 @@ async def update_user(
 
 @router.delete("/delete")
 async def delete_user(
-        db: DBDep,
-        user_id: UserIdDep,
-        response: Response,
+    db: DBDep,
+    user_id: UserIdDep,
+    response: Response,
 ):
     print(user_id)
     await db.users.delete(user_id)
@@ -126,12 +120,12 @@ async def delete_user(
 
 @router.post("/logout")
 async def logout_user(
-        db: DBDep,
-        response: Response,
-        hashed_refresh_token: RefreshTokenDep,
+    db: DBDep,
+    response: Response,
+    hashed_refresh_token: RefreshTokenDep,
 ):
     await db.refresh_token.edit(
-        RefreshTokenUpdate(revoked_at=datetime.now(timezone.utc)),
+        RefreshTokenUpdate(revoked_at=datetime.now(UTC)),
         is_patch=True,
         token_hash=hashed_refresh_token,
     )

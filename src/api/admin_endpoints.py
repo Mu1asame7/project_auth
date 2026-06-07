@@ -10,8 +10,8 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 @router.get("/roles")
 @RolesChecker(["admin"])
 async def get_roles(
-        db: DBDep,
-        user_id: UserIdDep,
+    db: DBDep,
+    user_id: UserIdDep,
 ):
     return await db.roles.get_all()
 
@@ -19,9 +19,9 @@ async def get_roles(
 @router.post("/roles")
 @RolesChecker(["admin"])
 async def create_roles(
-        db: DBDep,
-        user_id: UserIdDep,
-        role_data: RoleRequestAdd,
+    db: DBDep,
+    user_id: UserIdDep,
+    role_data: RoleRequestAdd,
 ):
     role = await db.roles.add(role_data)
     await db.commit()
@@ -32,10 +32,10 @@ async def create_roles(
 @router.patch("/roles/{role_id}")
 @RolesChecker(["admin"])
 async def update_role(
-        role_id: int,
-        db: DBDep,
-        user_id: UserIdDep,
-        role_data: RoleUpdate,
+    role_id: int,
+    db: DBDep,
+    user_id: UserIdDep,
+    role_data: RoleUpdate,
 ):
     await db.roles.edit(role_data, is_patch=True, id=role_id)
     await db.commit()
@@ -45,9 +45,9 @@ async def update_role(
 @router.delete("/roles/{role_id}")
 @RolesChecker(["admin"])
 async def delete_role(
-        role_id: int,
-        db: DBDep,
-        user_id: UserIdDep,
+    role_id: int,
+    db: DBDep,
+    user_id: UserIdDep,
 ):
     await db.roles.delete(id=role_id)
     await db.commit()
@@ -57,9 +57,9 @@ async def delete_role(
 @router.get("/users/{target_user_id}/roles")
 @RolesChecker(["admin"])
 async def get_user_roles(
-        target_user_id: int,
-        db: DBDep,
-        user_id: UserIdDep,
+    target_user_id: int,
+    db: DBDep,
+    user_id: UserIdDep,
 ):
     roles = await db.user_roles.get_roles_by_user_id(target_user_id)
     return roles
@@ -68,10 +68,10 @@ async def get_user_roles(
 @router.post("/users/{target_user_id}/roles")
 @RolesChecker(["admin"])
 async def assign_role_to_user(
-        target_user_id: int,
-        db: DBDep,
-        user_id: UserIdDep,
-        role_data: UserRoleAdd,
+    target_user_id: int,
+    db: DBDep,
+    user_id: UserIdDep,
+    role_data: UserRoleAdd,
 ):
     role = await db.roles.get_one_or_none(id=role_data.role_id)
     print(role)
@@ -92,10 +92,10 @@ async def assign_role_to_user(
 @router.delete("/users/{target_user_id}/roles/{role_id}")
 @RolesChecker(["admin"])
 async def remove_role_from_user(
-        target_user_id: int,
-        role_id: int,
-        db: DBDep,
-        user_id: UserIdDep,
+    target_user_id: int,
+    role_id: int,
+    db: DBDep,
+    user_id: UserIdDep,
 ):
     await db.user_roles.delete(user_id=target_user_id, role_id=role_id)
     await db.commit()

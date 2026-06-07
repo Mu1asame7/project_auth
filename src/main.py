@@ -6,8 +6,8 @@ from fastapi import FastAPI
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.api.auth import router as auth_router
 from src.api.admin_endpoints import router as admin_router
+from src.api.auth import router as auth_router
 
 app = FastAPI()
 

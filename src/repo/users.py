@@ -1,10 +1,10 @@
 from pydantic import EmailStr
 from sqlalchemy import select, update
 
-from src.repo.mappers.mappers import UserDataMapper
-from src.schemas.users import UserWithHashedPassword
 from src.models.users import UsersORM
 from src.repo.base import BaseRepo
+from src.repo.mappers.mappers import UserDataMapper
+from src.schemas.users import UserWithHashedPassword
 
 
 class UsersRepository(BaseRepo):

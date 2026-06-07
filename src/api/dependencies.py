@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, Request, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 
 from src.database import async_session_maker
 from src.service.auth import AuthService
