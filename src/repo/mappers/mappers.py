@@ -3,7 +3,7 @@ from src.models.roles import RolesORM
 from src.models.users import UsersORM
 from src.repo.mappers.base import DataMapper
 from src.schemas.refresh_token import RefreshTokenDB
-from src.schemas.roles import Role
+from src.schemas.roles import Role, RoleInDB
 from src.schemas.users import User
 
 
@@ -20,3 +20,8 @@ class RefreshTokenDataMapper(DataMapper):
 class RolesDataMapper(DataMapper):
     db_model = RolesORM
     schema = Role
+
+
+class RoleMapper(DataMapper):
+    model = RolesORM
+    schema = RoleInDB
