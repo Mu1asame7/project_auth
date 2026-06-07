@@ -4,7 +4,8 @@ from fastapi import APIRouter, Response, HTTPException
 
 from src.api.dependencies import DBDep, UserIdDep, RefreshTokenDep
 from src.schemas.refresh_token import RefreshTokenAdd, RefreshTokenUpdate
-from src.schemas.users import UserRequestAdd, UserAdd, UserLogin, UserUpdate
+from src.schemas.roles import UserRoleAdd
+from src.schemas.users import UserRequestAdd, UserAdd, UserLogin, UserUpdate, User
 from src.service.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
@@ -23,7 +24,11 @@ async def register_user(
         middle_name=data.middle_name,
         hashed_password=hashed_password
     )
-    await db.users.add(new_user_data)
+    user = await db.users.add(new_user_data)
+
+    standard_roles_ids = [2]
+    room_facilities_data = [UserRoleAdd(user_id=user.id, role_id=r_id) for r_id in standard_roles_ids]
+    await db.user_roles.add_bulk(room_facilities_data)
     await db.commit()
 
     return {"status": "OK"}

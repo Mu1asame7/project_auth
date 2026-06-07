@@ -24,6 +24,10 @@ class BaseRepo:
         model = result.scalars().one()
         return self.mapper.map_to_domain_entity(model)
 
+    async def add_bulk(self, data: list[BaseModel]):
+        add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
+        await self.session.execute(add_data_stmt)
+
     async def edit(self, data: BaseModel, is_patch: bool = False, **filter_by) -> None:
         update_data_stmt = update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=is_patch))
         await self.session.execute(update_data_stmt)

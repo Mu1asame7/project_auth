@@ -9,6 +9,7 @@ from src.config import settings
 from src.database import Base
 from src.models.users import UsersORM
 from src.models.refresh_token import RefreshToken
+from src.models.roles import RolesORM, UserRoles
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
